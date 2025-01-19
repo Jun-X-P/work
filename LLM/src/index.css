@@ -1,0 +1,9 @@
+/* src/index.css */
+.App {
+  text-align: center;
+  background-color: #f0f2f5;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
