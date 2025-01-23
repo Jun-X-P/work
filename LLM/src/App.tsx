@@ -6,7 +6,7 @@ import './index.css';
 const App: React.FC = () => {
   return (
     <div className="App">
-      <LLMDialog title="LLM 对话框" />
+      <LLMDialog />
     </div>
   );
 };
