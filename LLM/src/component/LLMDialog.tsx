@@ -5,6 +5,7 @@ import { UserOutlined, SearchOutlined, ArrowUpOutlined } from '@ant-design/icons
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from 'openai/resources/index.mjs';
 import DialogBubble from './dialogueBubble';
+
 const { Header, Sider, Content } = Layout;
 const { Title} = Typography;
 const { TextArea } = Input;
@@ -14,6 +15,7 @@ interface MenuItem {
 }
 
 export interface LLMDialogProps {
+  id: number;
   type: string;
   text: string;
 }
@@ -44,6 +46,7 @@ const LLMDialog: React.FC = () => {
   const [messages, setMessages] = useState< ChatCompletionMessageParam[]>([{ role: "system", content: "You are a helpful assistant." },]);
   const [LlmDialog, setLlmDialog] = useState<LLMDialogProps[]>([]);
   const [isScrolling, setIsScrolling] = useState(false);
+  const [isGenerat,setIsGenerat] = useState(false);
   // useEffect(() => {
   //   // 禁用整个页面的滚动
   //   document.body.style.overflow = 'hidden';
@@ -57,7 +60,7 @@ const LLMDialog: React.FC = () => {
       // setUserInPut(content)
       let tempLlmDialog:LLMDialogProps[] = [
         ...LlmDialog, 
-        { type: 'user', text: content },
+        { id: Date.now(),type: 'user', text: content },
       ];
       setLlmDialog(tempLlmDialog);
       let tempMessages: ChatCompletionMessageParam[] = [
@@ -74,20 +77,21 @@ const LLMDialog: React.FC = () => {
         if (chunk.choices && chunk.choices.length > 0) {
             const deltaContent = chunk.choices[0].delta?.content || '';
             responseText += deltaContent;
-            let temp:LLMDialogProps[] =[...tempLlmDialog,{ type: 'system', text: responseText }];
+            let temp:LLMDialogProps[] =[...tempLlmDialog,{ id: Date.now(), type: 'system', text: responseText }];
             setLlmDialog(temp); 
             // setSystemOut(responseText);
             // console.log(deltaContent);
         }
       }
       tempMessages=[...messages,{ role: "assistant", content: content }];
-      tempLlmDialog=[...tempLlmDialog,{ type: 'system', text: responseText }];
+      tempLlmDialog=[...tempLlmDialog,{ id: Date.now(), type: 'system', text: responseText }];
       setMessages(tempMessages);
       setLlmDialog(tempLlmDialog); 
       // console.log('Final Response:', responseText);
     } 
     const handleSubmit = async () => {
       setIsScrolling(false)
+      setIsGenerat(true)
       if (!inputText) {
         message.warning('请输入你的问题');
         return;
@@ -133,6 +137,8 @@ const LLMDialog: React.FC = () => {
            LlmDialogText={LlmDialog}
            isScrolling={isScrolling} 
            setIsScrolling={setIsScrolling}
+           isGenerating={isGenerat}
+           setIsGenerating={setIsGenerat}
           />
         </Content>
           <TextArea 
@@ -163,3 +169,6 @@ const LLMDialog: React.FC = () => {
 };
   
 export default LLMDialog;
+
+
+//增加停止和重新生成按钮

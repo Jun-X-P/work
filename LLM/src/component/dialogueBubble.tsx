@@ -1,11 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
-import { Typography } from 'antd';
+import { Button, Typography } from 'antd';
 import { LLMDialogProps } from "./LLMDialog";
 import { set } from 'date-fns';
 const { Paragraph } = Typography;
-export default function DialogBubble({ LlmDialogText,isScrolling, setIsScrolling}: { LlmDialogText: LLMDialogProps[], isScrolling: boolean , setIsScrolling: React.Dispatch<React.SetStateAction<boolean>> }) {
+interface props {
+  LlmDialogText: LLMDialogProps[],
+  isScrolling: boolean ,
+  setIsScrolling: React.Dispatch<React.SetStateAction<boolean>> ,
+  isGenerating: boolean,
+  setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>,
+}
+export default function DialogBubble( props: props ) {
   const paragraphRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const { LlmDialogText, isScrolling, setIsScrolling, isGenerating, setIsGenerating }= props;
   const scrollY =useRef(0);
   const baseStyle = {
     listStyleType: 'none',
@@ -56,8 +64,14 @@ export default function DialogBubble({ LlmDialogText,isScrolling, setIsScrolling
           : { ...baseStyle, float: 'left' as React.CSSProperties['float'], clear: 'both' as React.CSSProperties['clear'], maxWidth: '100%' };
 
         return (
-          <li key={index} style={positionStyle}>
+          <li key={item.id} style={positionStyle}>
             <Paragraph copyable style={pStyle} ref={paragraphRef}>{item.text}</Paragraph>
+            {item.type === 'system' && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                  {isGenerating&&<Button type="link" onClick={() => setIsGenerating(false)}>停止</Button>}
+                  {!isGenerating&&<Button type="link" >重新生成</Button>}
+                </div>
+              )}
           </li>
         );
       })}
