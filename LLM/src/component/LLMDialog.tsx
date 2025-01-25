@@ -1,11 +1,10 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Layout, Menu, Input, Button, Typography, message, Flex, Space, Popover, Dropdown, MenuProps, DescriptionsProps, Card } from 'antd';
+import { Layout, Menu, Input, Button, Typography, message, Space, Popover, Dropdown, MenuProps} from 'antd';
 import { UserOutlined, SearchOutlined, ArrowUpOutlined, PauseCircleOutlined } from '@ant-design/icons';
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from 'openai/resources/index.mjs';
 import DialogBubble from './dialogueBubble';
-import { is } from 'date-fns/locale';
 
 const { Header, Sider, Content } = Layout;
 const { Title} = Typography;
@@ -33,7 +32,7 @@ const openai = new OpenAI(
     {
         apiKey: 'sk-abc6845c88d44b2aafd6e189ac3933b6',
         baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-        dangerouslyAllowBrowser: true
+        dangerouslyAllowBrowser: true //需要优化 避免危险
     }
 );
 
@@ -45,12 +44,14 @@ const menuItems: MenuProps['items'] = items.map((item) => ({
 const LLMDialog: React.FC = () => {
   const [inputText, setInputText] = useState<string>('');
   const [messages, setMessages] = useState< ChatCompletionMessageParam[]>([{ role: "system", content: "You are a helpful assistant." },]);
-  const [LlmDialog, setLlmDialog] = useState<LLMDialogProps[]>([]);
+  const [llmDialog, setLlmDialog] = useState<LLMDialogProps[]>([]);
   const [isScrolling, setIsScrolling] = useState(false);
   const [isGenerat,setIsGenerat] = useState<boolean>(false);
-  const [isRegenerate,setIsRegenerate] = useState<boolean>(false);
+  // const [isRegenerate,setIsRegenerate] = useState<boolean>(false);
   const [lastInputText,setLastInputText] = useState<string>('')
   const abortControllerRef = useRef<AbortController | null>(null);
+  const llmDialogRef=useRef<LLMDialogProps[]>([]);
+  const isRegenerateRef = useRef<boolean>(false);
   useEffect(() => {
     // 禁用整个页面的滚动
     document.body.style.overflow = 'hidden';
@@ -60,14 +61,16 @@ const LLMDialog: React.FC = () => {
     };
   }, []);  
   async function fetchAi(content: string) {
+    llmDialogRef.current=llmDialog
+    // console.log('llm',llmDialogRef.current);    
     //设置问题
-    let tempLlmDialog:LLMDialogProps[] = [
-      ...LlmDialog, 
-      { id: Date.now(),type: 'user', text: content },
-    ];
-    if(!isRegenerate){
-      setLlmDialog(tempLlmDialog);
-      console.log('user',isRegenerate);
+    if(!isRegenerateRef.current){
+      // console.log('is',isRegenerate);
+      llmDialogRef.current = [
+        ...llmDialog, 
+        { id: Date.now(),type: 'user', text: content },
+      ]
+      // console.log('llm2',llmDialogRef.current);    
     }
     
     let tempMessages: ChatCompletionMessageParam[] = [
@@ -93,7 +96,7 @@ const LLMDialog: React.FC = () => {
         if (chunk.choices && chunk.choices.length > 0) {
             const deltaContent = chunk.choices[0].delta?.content || '';
             responseText += deltaContent;
-            let temp:LLMDialogProps[] =[...tempLlmDialog,{ id: Date.now(), type: 'system', text: responseText }];
+            let temp:LLMDialogProps[] =[...llmDialogRef.current,{ id: Date.now(), type: 'system', text: responseText }];
             setLlmDialog(temp); 
         }
       }
@@ -103,10 +106,11 @@ const LLMDialog: React.FC = () => {
         { role: "assistant", content: content }
       ])
       setLlmDialog([
-        ...LlmDialog,
+        ...llmDialogRef.current,
         { id: Date.now(), type: 'system', text: responseText }
       ]);
-
+      // console.log('llm', ...llmDialogRef.current);
+      
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
           console.log('请求已中断');
@@ -118,61 +122,61 @@ const LLMDialog: React.FC = () => {
         abortControllerRef.current = null;
       }
     } 
-    const handleSubmit = async () => {
-      setIsScrolling(false)
-      setIsGenerat(true)
-      setLastInputText(inputText)
-      setInputText('') // 重置输入框
-      if (!inputText) {
-        message.warning('请输入你的问题');
-        return;
-      }
+  const handleSubmit = async () => {
+    setIsScrolling(false)
+    setIsGenerat(true)
+    setLastInputText(inputText)
+    setInputText('') // 重置输入框
+    if (!inputText) {
+      message.warning('请输入你的问题');
+      return;
+    }
 
-      try {
-        await fetchAi(inputText);
-      } catch (error) {
-        console.error('获取响应时出错:', error);
-        message.error('获取响应时出错，请重试');
-      } finally{
-        setIsGenerat(false)
-      }
-    };
+    try {
+      await fetchAi(inputText);
+    } catch (error) {
+      console.error('获取响应时出错:', error);
+      message.error('获取响应时出错，请重试');
+    } finally{
+      setIsGenerat(false)
+    }
+  };
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault(); // 阻止默认的换行行为
-        handleSubmit(); // 手动触发 onPressEnter 事件
-      }
-    };
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault(); // 阻止默认的换行行为
+      handleSubmit(); // 手动触发 onPressEnter 事件
+    }
+  };
 
-    const handleStop = () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        setIsGenerat(false);
-      }
-      //打断了也要保留记录 帮助ai回答
-      setMessages([
-        ...messages,
-        { role: "assistant", content: lastinputText }
-      ])
-    };
+  const handleStop = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setIsGenerat(false);
+    }
+    //打断了也要保留记录 帮助ai回答
+    setMessages([
+      ...messages,
+      { role: "assistant", content: lastInputText }
+    ])
+  };
 
-    const regenerate = async() => {
-      setIsScrolling(false)
-      setIsGenerat(true)
-      setIsRegenerate(true)
-      console.log('???',isRegenerate)
-      
-      try {
-        await fetchAi(lastInputText);
-      } catch (error) {
-        console.error('获取响应时出错:', error);
-        message.error('获取响应时出错，请重试');
-      } finally{
-        setIsGenerat(false)
-        setIsRegenerate(false)
-      }
-    };
+  const regenerate = async() => {
+    setIsScrolling(false)
+    setIsGenerat(true)
+    // setIsRegenerate(true)
+    // console.log('???',isRegenerate)
+    isRegenerateRef.current=true
+    try {
+      await fetchAi(lastInputText);
+    } catch (error) {
+      console.error('获取响应时出错:', error);
+      message.error('获取响应时出错，请重试');
+    } finally{
+      setIsGenerat(false)
+      isRegenerateRef.current=false
+    }
+  };
 
   return (
     <Layout style={{ minHeight: '99vh'}}>
@@ -197,7 +201,7 @@ const LLMDialog: React.FC = () => {
         </Header>
         <Content style={{ padding: 24, background: '#fff', height: '50vh' }}>
           <DialogBubble
-           LlmDialogText={LlmDialog}
+           LlmDialogText={llmDialog}
            isScrolling={isScrolling} 
            setIsScrolling={setIsScrolling}
            isGenerating={isGenerat}
