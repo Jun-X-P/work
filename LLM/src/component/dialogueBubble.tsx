@@ -9,36 +9,39 @@ interface props {
   setIsScrolling: React.Dispatch<React.SetStateAction<boolean>> ,
   isGenerating: boolean,
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>,
+  handleStop: () => void
+  regenerate: () => void
 }
+
+const baseStyle = {
+  listStyleType: 'none',
+  backgroundColor: 'rgb(245,245,245)',
+  minWidth: 0,
+  maxWidth: '40%',
+  borderRadius: '15px',
+  fontSize: '26px',
+  lineHeight: '26px',
+  padding: '0px 10px 0px 10px',
+  marginTop: '20px',
+};
+
+const pStyle = {
+  whiteSpace: 'pre-wrap',
+  textAlign: 'left' as React.CSSProperties['textAlign'],
+  margin: '10px',
+  fontSize: '18px',
+  lineHeight: '30px',
+  // userSelect: 'text'as React.CSSProperties['userSelect'] // 允许用户选择文本
+};
 export default function DialogBubble( props: props ) {
-  const paragraphRef = useRef<HTMLDivElement | null>(null);
+  const liRef = useRef<HTMLLIElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const { LlmDialogText, isScrolling, setIsScrolling, isGenerating, setIsGenerating }= props;
+  const { LlmDialogText, isScrolling, setIsScrolling, isGenerating, handleStop, regenerate }= props;
   const scrollY =useRef(0);
-  const baseStyle = {
-    listStyleType: 'none',
-    backgroundColor: 'rgb(245,245,245)',
-    minWidth: 0,
-    maxWidth: '40%',
-    borderRadius: '15px',
-    fontSize: '26px',
-    lineHeight: '26px',
-    padding: '0px 10px 0px 10px',
-    marginTop: '20px',
-  };
-
-  const pStyle = {
-    whiteSpace: 'pre-wrap',
-    textAlign: 'left' as React.CSSProperties['textAlign'],
-    margin: '10px',
-    fontSize: '18px',
-    lineHeight: '30px',
-    // userSelect: 'text'as React.CSSProperties['userSelect'] // 允许用户选择文本
-  };
-
+ 
   useEffect(() => {
-    if (paragraphRef.current && !isScrolling) {
-      paragraphRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    if (liRef.current && !isScrolling) {
+      liRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, [LlmDialogText]);
   
@@ -51,9 +54,9 @@ export default function DialogBubble( props: props ) {
     if(scrollY.current > scrollTop + 5) setIsScrolling(true);
     scrollY.current = scrollTop;
     // 获取水平滚动距离
-    console.log(`垂直滚动距离: ${scrollTop}px`);
-    console.log('is:',isScrolling);
-};
+    // console.log(`垂直滚动距离: ${scrollTop}px`);
+    // console.log('is:',isScrolling);
+  };
 
   return ( 
     <div ref={scrollContainerRef} onScroll={handleScroll} style={{ height: '100%', width: '100%', padding: '0 100px', overflowY: 'auto' }}>
@@ -64,12 +67,19 @@ export default function DialogBubble( props: props ) {
           : { ...baseStyle, float: 'left' as React.CSSProperties['float'], clear: 'both' as React.CSSProperties['clear'], maxWidth: '100%' };
 
         return (
-          <li key={item.id} style={positionStyle}>
-            <Paragraph copyable style={pStyle} ref={paragraphRef}>{item.text}</Paragraph>
+          <li key={item.id} style={positionStyle} ref={liRef}>
+            <Paragraph copyable style={pStyle} >{item.text}</Paragraph>
             {item.type === 'system' && (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
-                  {isGenerating&&<Button type="link" onClick={() => setIsGenerating(false)}>停止</Button>}
-                  {!isGenerating&&<Button type="link" >重新生成</Button>}
+                  {index === LlmDialogText.length - 1 && !isGenerating && (
+                    <Button
+                      type="default"
+                      onClick={regenerate}
+                      style={{ marginRight: '10px' }}
+                    >
+                      重新生成
+                    </Button>
+                  )}
                 </div>
               )}
           </li>
