@@ -5,10 +5,11 @@ import { UserOutlined, SearchOutlined, ArrowUpOutlined, PauseCircleOutlined } fr
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from 'openai/resources/index.mjs';
 import DialogBubble from './dialogueBubble';
+import CombinedInputArea from './paste';
 
 const { Header, Sider, Content } = Layout;
 const { Title} = Typography;
-const { TextArea } = Input;
+// const { TextArea } = Input;
 interface MenuItem {
   key: string;
   label: string;
@@ -18,6 +19,11 @@ export interface LLMDialogProps {
   id: number;
   type: string;
   text: string;
+}
+
+interface Input {
+  imgurl: string;
+  text: string,
 }
 
 const items: MenuItem[] = [
@@ -43,48 +49,56 @@ const menuItems: MenuProps['items'] = items.map((item) => ({
 
 const LLMDialog: React.FC = () => {
   const [inputText, setInputText] = useState<string>('');
+  const [lastInputText,setLastInputText] = useState<string>('')
   const [messages, setMessages] = useState< ChatCompletionMessageParam[]>([{ role: "system", content: "You are a helpful assistant." },]);
-  const [llmDialog, setLlmDialog] = useState<LLMDialogProps[]>([]);
+  const [llmDialog, setLlmDialog] = useState<LLMDialogProps[]>([]);//储存对话
   const [isScrolling, setIsScrolling] = useState(false);
   const [isGenerat,setIsGenerat] = useState<boolean>(false);
   // const [isRegenerate,setIsRegenerate] = useState<boolean>(false);
-  const [lastInputText,setLastInputText] = useState<string>('')
   const abortControllerRef = useRef<AbortController | null>(null);
-  const llmDialogRef=useRef<LLMDialogProps[]>([]);
+  const llmDialogRef=useRef<LLMDialogProps[]>([]);//获取最新对话
   const isRegenerateRef = useRef<boolean>(false);
+  const imageUrlRef = useRef<string>('');//获取图片url
   const scrollY =useRef(0);
-  useEffect(() => {
-    // 禁用整个页面的滚动
-    document.body.style.overflow = 'hidden';
-    return () => {
-      // 恢复页面滚动
-      document.body.style.overflow = '';
-    };
-  }, []);  
-  async function fetchAi(content: string) {
+  // useEffect(() => {
+  //   // 禁用整个页面的滚动
+  //   document.body.style.overflow = 'hidden';
+  //   return () => {
+  //     // 恢复页面滚动
+  //     document.body.style.overflow = '';
+  //   };
+  // }, []);  
+
+  async function fetchAi(content: Input) {
     console.log('llm1111111111111111111111111111111');
-    
+    console.log('llm', messages);
+    console.log('content',content);
+
     //设置问题
-    
     llmDialogRef.current = [
       ...llmDialog, 
-      { id: Date.now(),type: 'user', text: content },
+      { id: Date.now(),type: 'user', text: content.text ? content.text : '这是什么' },
     ] 
     
     setLlmDialog(llmDialogRef.current)
     let tempMessages: ChatCompletionMessageParam[] = [
       ...messages,
-      { role: "user", content: content },
+      {role: "user",content: [
+        { type: "text", text: content.text ? content.text : '这是什么'  },
+        { type: "image_url",image_url: {"url": content.imgurl ? content.imgurl : 'https://dashscope.oss-cn-beijing.aliyuncs.com/images/dog_and_girl.jpeg' }}
+      ]}
     ]; 
+    
     // 创建一个新的 AbortController 实例
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
     try{
       const completion = await openai.chat.completions.create({
-          model: "qwen-plus",
+          model: "qwen-vl-max",
+          // messages: tempMessages,
           messages: tempMessages,
-          stream: true,
+          stream: true, 
           // signal: controller.signal, // 将 signal 放入 create 方法的选项对象中
       }, {
         signal: controller.signal, // 将 signal 放入第二个参数对象中
@@ -95,15 +109,19 @@ const LLMDialog: React.FC = () => {
         if (chunk.choices && chunk.choices.length > 0) {
             const deltaContent = chunk.choices[0].delta?.content || '';
             responseText += deltaContent;
-            let temp:LLMDialogProps[] =[...llmDialogRef.current,{ id: Date.now(), type: 'system', text: responseText }];
+            let temp:LLMDialogProps[] =[...llmDialogRef.current,{ id: Date.now(), type: 'system', text: responseText}];
             setLlmDialog(temp); 
         }
       }
       
       setMessages([
         ...messages,
-        { role: "assistant", content: content }
+        {role: "user",content: [
+          { type: "text", text: content.text ? content.text : '这是什么' },
+          { type: "image_url",image_url: {"url": content.imgurl ? content.imgurl : 'https://dashscope.oss-cn-beijing.aliyuncs.com/images/dog_and_girl.jpeg' }}
+        ]}
       ])
+
       setLlmDialog([
         ...llmDialogRef.current,
         { id: Date.now(), type: 'system', text: responseText }
@@ -120,23 +138,24 @@ const LLMDialog: React.FC = () => {
       } finally {
         abortControllerRef.current = null;
       }
-    } 
+  } 
   const handleSubmit = async () => {
-    setIsScrolling(false)
-    setIsGenerat(true)
-    setLastInputText(inputText)
-    setInputText('') // 重置输入框
-    if (!inputText) {
+    if (!inputText&&!imageUrlRef.current) {
       message.warning('请输入你的问题');
       return;
     }
 
+    setIsScrolling(false)
+    setIsGenerat(true)
+    setLastInputText(inputText)
+    setInputText('') // 重置输入框
     try {
-      await fetchAi(inputText);
+      await fetchAi({text: inputText,imgurl: imageUrlRef.current});
     } catch (error) {
       console.error('获取响应时出错:', error);
       message.error('获取响应时出错，请重试');
     } finally{
+      imageUrlRef.current=''
       setIsGenerat(false)
     }
   };
@@ -167,7 +186,7 @@ const LLMDialog: React.FC = () => {
     // console.log('???',isRegenerate)
     isRegenerateRef.current=true
     try {
-      await fetchAi(lastInputText);
+      await fetchAi({text: lastInputText,imgurl: imageUrlRef.current});
     } catch (error) {
       console.error('获取响应时出错:', error);
       message.error('获取响应时出错，请重试');
@@ -176,6 +195,30 @@ const LLMDialog: React.FC = () => {
       isRegenerateRef.current=false
     }
   };
+
+  // const handlePaste = async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+  //   const items = event.clipboardData.items;
+  //   console.log('items',items);
+    
+  //   for (let i = 0; i < items.length; i++) {
+  //     if (items[i].type.indexOf('image') !== -1) {
+  //       event.preventDefault();
+  //       const blob = items[i].getAsFile();
+  //       console.log('blob',blob);
+  //       if (blob) {
+  //         try {
+  //           // 创建一个临时的 URL 用于显示图像
+  //           const imageUrl = URL.createObjectURL(blob);
+  //           console.log('imageUrl',imageUrl);
+  //           imageUrlRef.current = imageUrl;
+  //         } catch (error) {
+  //           console.error('Error handling paste:', error);
+  //           message.error('Failed to handle pasted image');
+  //         }
+  //       }
+  //     }
+  //   }
+  // };
 
   return (
     <Layout style={{ minHeight: '99vh'}}>
@@ -207,18 +250,18 @@ const LLMDialog: React.FC = () => {
            setIsGenerating={setIsGenerat}
            scrollY={scrollY}
            regenerate={regenerate}
-          />
+          />     
         </Content>
-          <TextArea 
-            autoSize={{ minRows: 4, maxRows: 12 }} // 设置自动伸缩的最小和最大行数
-            // placeholder='输入问题或者粘贴图片提问'
+          <CombinedInputArea
+            autoSize={{ minRows: 4, maxRows: 12 }} // 设置自动伸缩的最小和最大行数  
+            placeholder='输入问题或者粘贴图片提问'
             maxLength={1000000} // 设置合理的最大长度
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            // onPressEnter={handleSubmit}
             onKeyDown={handleKeyDown}
-            style={{ width:'auto',padding:'20px', borderRadius: '20px',}} // 设置最大高度
-          /> 
+            style={{ width: 'auto', padding: '20px', borderRadius: '20px' }} // 设置最大高度
+            imageUrlRef={imageUrlRef} 
+          />
           { !isGenerat ? (<ArrowUpOutlined 
             style={{
               borderRadius: '25px',
@@ -251,5 +294,3 @@ const LLMDialog: React.FC = () => {
   
 export default LLMDialog;
 
-
-//增加停止和重新生成按钮

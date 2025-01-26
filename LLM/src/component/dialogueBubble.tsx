@@ -48,9 +48,9 @@ export default function DialogBubble( props: props ) {
   useEffect(() => {
     if (liRef.current && !isScrolling) {
       liRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
-      console.log('iss:', isScrolling);
+      // console.log('iss:', isScrolling);
     }
-    console.log('is:',isScrolling);
+    // console.log('is:',isScrolling);
   }, [LlmDialogText, isScrolling]);
   
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
@@ -59,7 +59,7 @@ export default function DialogBubble( props: props ) {
     const target = event.target as HTMLDivElement;
     // 获取垂直滚动距离
     const scrollTop = target.scrollTop;
-    console.log('now:',scrollTop,'last:',scrollY.current)
+    // console.log('now:',scrollTop,'last:',scrollY.current)
     if(scrollY.current > scrollTop ) setIsScrolling(true),console.log('is:',true);
     scrollY.current = scrollTop;
     
