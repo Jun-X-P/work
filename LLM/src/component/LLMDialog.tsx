@@ -196,30 +196,6 @@ const LLMDialog: React.FC = () => {
     }
   };
 
-  // const handlePaste = async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-  //   const items = event.clipboardData.items;
-  //   console.log('items',items);
-    
-  //   for (let i = 0; i < items.length; i++) {
-  //     if (items[i].type.indexOf('image') !== -1) {
-  //       event.preventDefault();
-  //       const blob = items[i].getAsFile();
-  //       console.log('blob',blob);
-  //       if (blob) {
-  //         try {
-  //           // 创建一个临时的 URL 用于显示图像
-  //           const imageUrl = URL.createObjectURL(blob);
-  //           console.log('imageUrl',imageUrl);
-  //           imageUrlRef.current = imageUrl;
-  //         } catch (error) {
-  //           console.error('Error handling paste:', error);
-  //           message.error('Failed to handle pasted image');
-  //         }
-  //       }
-  //     }
-  //   }
-  // };
-
   return (
     <Layout style={{ minHeight: '99vh'}}>
       <Sider width={200} style={{ background: '#fff', height:'10vh'}}>

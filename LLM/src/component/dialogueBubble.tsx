@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Button, Typography } from 'antd';
 import { LLMDialogProps } from "./LLMDialog";
 
@@ -37,13 +37,6 @@ export default function DialogBubble( props: props ) {
   const liRef = useRef<HTMLLIElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const { LlmDialogText, isScrolling, setIsScrolling, isGenerating, regenerate, scrollY }= props;
-  
-  // const handleScrollToBottom = async () => {
-  //   if (liRef.current && !isScrolling) {
-  //     await liRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
-  //     console.log('iss:', isScrolling);
-  //   }
-  // };
 
   useEffect(() => {
     if (liRef.current && !isScrolling) {

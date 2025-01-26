@@ -41,37 +41,41 @@ const CombinedInputArea: React.FC<CombinedInputAreaProps> = ({ onPaste, imageUrl
   };
 
   return (
-    <div
-      ref={editableDivRef}
-      contentEditable
-      onPaste={handlePaste}
-      style={{
-        border: '1px solid #ccc',
-        padding: '10px',
-        minHeight: '100px',
-        overflowY: 'auto',
-        width: '100%',
-        position: 'relative',
-        boxSizing: 'border-box', // 确保 padding 和 border 包含在宽度内
-      }}
-    >
+    <>
       <TextArea
         {...props}
         style={{
           width: '100%',
           height: '100%',
-          border: 'none',
-          outline: 'none',
+          border: '2px solid rgb(41, 4, 4)',
+          // outline: 'none',
           resize: 'none',
-          position: 'absolute',
+          borderRadius:'40px',
+          position: 'relative',
           top: 0,
           left: 0,
           backgroundColor: 'transparent',
-          boxSizing: 'border-box', // 确保 padding 和 border 包含在宽度内
+          // boxSizing: 'border-box', // 确保 padding 和 border 包含在宽度内
         }}
         // onPaste={handlePaste}
       />
-    </div>
+      <div
+        ref={editableDivRef}
+        contentEditable
+        onPaste={handlePaste}
+        style={{
+          position:'absolute',
+          border: '1px solid #ccc',
+          padding: '10px',
+          height: '100px',
+          width: '100px',
+          overflowY: 'auto',
+          // boxSizing: 'border-box', // 确保 padding 和 border 包含在宽度内
+        }}
+      >
+        请黏贴图片
+      </div>
+    </>
   );
 };
 
