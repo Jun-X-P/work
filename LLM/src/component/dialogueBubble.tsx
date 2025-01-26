@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, Typography } from 'antd';
 import { LLMDialogProps } from "./LLMDialog";
-import { set } from 'date-fns';
+
 const { Paragraph } = Typography;
 interface props {
   LlmDialogText: LLMDialogProps[],
@@ -9,8 +9,8 @@ interface props {
   setIsScrolling: React.Dispatch<React.SetStateAction<boolean>> ,
   isGenerating: boolean,
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>,
-  handleStop: () => void
   regenerate: () => void
+  scrollY: React.MutableRefObject<number>
 }
 
 const baseStyle = {
@@ -36,14 +36,22 @@ const pStyle = {
 export default function DialogBubble( props: props ) {
   const liRef = useRef<HTMLLIElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const { LlmDialogText, isScrolling, setIsScrolling, isGenerating, handleStop, regenerate }= props;
-  const scrollY =useRef(0);
- 
+  const { LlmDialogText, isScrolling, setIsScrolling, isGenerating, regenerate, scrollY }= props;
+  
+  // const handleScrollToBottom = async () => {
+  //   if (liRef.current && !isScrolling) {
+  //     await liRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+  //     console.log('iss:', isScrolling);
+  //   }
+  // };
+
   useEffect(() => {
     if (liRef.current && !isScrolling) {
-      liRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      liRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+      console.log('iss:', isScrolling);
     }
-  }, [LlmDialogText]);
+    console.log('is:',isScrolling);
+  }, [LlmDialogText, isScrolling]);
   
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     // event 是合成事件对象
@@ -51,8 +59,10 @@ export default function DialogBubble( props: props ) {
     const target = event.target as HTMLDivElement;
     // 获取垂直滚动距离
     const scrollTop = target.scrollTop;
-    if(scrollY.current > scrollTop + 5) setIsScrolling(true);
+    console.log('now:',scrollTop,'last:',scrollY.current)
+    if(scrollY.current > scrollTop ) setIsScrolling(true),console.log('is:',true);
     scrollY.current = scrollTop;
+    
     // 获取水平滚动距离
     // console.log(`垂直滚动距离: ${scrollTop}px`);
     // console.log('is:',isScrolling);

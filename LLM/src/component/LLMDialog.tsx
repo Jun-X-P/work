@@ -52,6 +52,7 @@ const LLMDialog: React.FC = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const llmDialogRef=useRef<LLMDialogProps[]>([]);
   const isRegenerateRef = useRef<boolean>(false);
+  const scrollY =useRef(0);
   useEffect(() => {
     // 禁用整个页面的滚动
     document.body.style.overflow = 'hidden';
@@ -61,18 +62,16 @@ const LLMDialog: React.FC = () => {
     };
   }, []);  
   async function fetchAi(content: string) {
-    llmDialogRef.current=llmDialog
-    // console.log('llm',llmDialogRef.current);    
-    //设置问题
-    if(!isRegenerateRef.current){
-      // console.log('is',isRegenerate);
-      llmDialogRef.current = [
-        ...llmDialog, 
-        { id: Date.now(),type: 'user', text: content },
-      ]
-      // console.log('llm2',llmDialogRef.current);    
-    }
+    console.log('llm1111111111111111111111111111111');
     
+    //设置问题
+    
+    llmDialogRef.current = [
+      ...llmDialog, 
+      { id: Date.now(),type: 'user', text: content },
+    ] 
+    
+    setLlmDialog(llmDialogRef.current)
     let tempMessages: ChatCompletionMessageParam[] = [
       ...messages,
       { role: "user", content: content },
@@ -206,7 +205,7 @@ const LLMDialog: React.FC = () => {
            setIsScrolling={setIsScrolling}
            isGenerating={isGenerat}
            setIsGenerating={setIsGenerat}
-           handleStop={handleStop}
+           scrollY={scrollY}
            regenerate={regenerate}
           />
         </Content>
