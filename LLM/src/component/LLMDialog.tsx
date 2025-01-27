@@ -22,7 +22,7 @@ export interface LLMDialogProps {
 }
 
 interface Input {
-  imgurl: string;
+  imgurl: string[];
   text: string,
 }
 
@@ -58,7 +58,7 @@ const LLMDialog: React.FC = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const llmDialogRef=useRef<LLMDialogProps[]>([]);//获取最新对话
   const isRegenerateRef = useRef<boolean>(false);
-  const imageUrlRef = useRef<string>('');//获取图片url
+  const imageUrlRef = useRef<string[]>([]);//获取图片url
   const scrollY =useRef(0);
   // useEffect(() => {
   //   // 禁用整个页面的滚动
@@ -75,20 +75,36 @@ const LLMDialog: React.FC = () => {
     console.log('content',content);
 
     //设置问题
+    // if(content.imgurl.length)
     llmDialogRef.current = [
       ...llmDialog, 
       { id: Date.now(),type: 'user', text: content.text ? content.text : '这是什么' },
-    ] 
-    
+    ]   
+
     setLlmDialog(llmDialogRef.current)
-    let tempMessages: ChatCompletionMessageParam[] = [
+    let tempMessages: ChatCompletionMessageParam[] = [...messages];
+    if(content.imgurl){
+      content.imgurl.forEach((item: string) => {
+        tempMessages.push({
+          role: "user",
+          content: [
+            { type: "image_url", image_url: { url: item } }
+          ]
+        });
+      });
+      
+      tempMessages.push({
+        role: "user",
+        content: [
+          { type: "text", text: content.text ? content.text : '这是什么' }
+        ]
+      });
+    }
+    else
+      tempMessages= [
       ...messages,
-      {role: "user",content: [
-        { type: "text", text: content.text ? content.text : '这是什么'  },
-        { type: "image_url",image_url: {"url": content.imgurl ? content.imgurl : 'https://dashscope.oss-cn-beijing.aliyuncs.com/images/dog_and_girl.jpeg' }}
-      ]}
-    ]; 
-    
+      {role: "user",content: content.text ? content.text : '这是什么'}
+    ];
     // 创建一个新的 AbortController 实例
     const controller = new AbortController();
     abortControllerRef.current = controller;
@@ -118,7 +134,7 @@ const LLMDialog: React.FC = () => {
         ...messages,
         {role: "user",content: [
           { type: "text", text: content.text ? content.text : '这是什么' },
-          { type: "image_url",image_url: {"url": content.imgurl ? content.imgurl : 'https://dashscope.oss-cn-beijing.aliyuncs.com/images/dog_and_girl.jpeg' }}
+          // { type: "image_url",image_url: {"url": content.imgurl ? content.imgurl : 'https://dashscope.oss-cn-beijing.aliyuncs.com/images/dog_and_girl.jpeg' }}
         ]}
       ])
 
@@ -155,7 +171,7 @@ const LLMDialog: React.FC = () => {
       console.error('获取响应时出错:', error);
       message.error('获取响应时出错，请重试');
     } finally{
-      imageUrlRef.current=''
+      imageUrlRef.current=[]
       setIsGenerat(false)
     }
   };

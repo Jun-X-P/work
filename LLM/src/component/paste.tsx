@@ -1,81 +1,128 @@
-import React, { useRef } from 'react';
-import { Input } from 'antd';
+import React, { useState } from 'react';
+import { Input, Modal } from 'antd';
 import { TextAreaProps } from 'antd/lib/input';
-
 const { TextArea } = Input;
 
 interface CombinedInputAreaProps extends TextAreaProps {
-  imageUrlRef: React.MutableRefObject<string | null>;
+  imageUrlRef: React.MutableRefObject<string[]>;
 }
 
 const CombinedInputArea: React.FC<CombinedInputAreaProps> = ({ onPaste, imageUrlRef, ...props }) => {
-  const editableDivRef = useRef<HTMLDivElement | null>(null);
+  // const editableDivRef = useRef<HTMLDivElement | null>(null);
+  const [images, setImages] = useState<string[]>([]);
+  const [display, setDisplay] = useState<string>('none');
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
 
-  const handlePaste = (event: React.ClipboardEvent<HTMLDivElement>) => {
-    const clipboardData = event.clipboardData || (window as any).clipboardData;
-    if (!clipboardData) return;
-
-    const imageItem = Array.from(clipboardData.items).find(item => item.type.startsWith('image'));
-    if (imageItem) {
-      handleImagePaste(imageItem.getAsFile());
-    } else {
-      // 如果不是图片，则调用传入的 onPaste 处理文本粘贴 
-      // onPaste(event);
+  const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = event.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const blob = items[i].getAsFile();
+        if (blob) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const result = e.target?.result;
+            if (result) {
+              setDisplay('flex')
+              setImages((prevImages) => [...prevImages, result as string]);
+              imageUrlRef.current=[...imageUrlRef.current,result as string]
+            }
+          };
+          reader.readAsDataURL(blob);
+        }
+      }
     }
   };
 
-  const handleImagePaste = (file: File | null) => {
-    if (!file) return;  
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = document.createElement('img');
-      img.src = e.target?.result as string;
-      img.style.maxWidth = '100%';
-      img.style.height = 'auto';
-      imageUrlRef.current = img.src; // 修改这里
-      if (editableDivRef.current) {
-        editableDivRef.current.appendChild(img);
-      }
-    };
-    reader.readAsDataURL(file);
+  const handleImageClick = (image: string) => {
+    setPreviewImage(image);
+    setIsModalVisible(true);
+  };
+
+  const handleModalCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  const handleImageDelete = (index : number) => {
+    const temp = images.filter((_, i) => i !== index)
+    if(temp.length === 0) setDisplay('none'),console.log(temp);
+    // console.log(temp);
+    setImages(temp)
   };
 
   return (
-    <>
-      <TextArea
-        {...props}
-        style={{
-          width: '100%',
-          height: '100%',
-          border: '2px solid rgb(41, 4, 4)',
-          // outline: 'none',
-          resize: 'none',
-          borderRadius:'40px',
-          position: 'relative',
-          top: 0,
-          left: 0,
-          backgroundColor: 'transparent',
-          // boxSizing: 'border-box', // 确保 padding 和 border 包含在宽度内
-        }}
-        // onPaste={handlePaste}
-      />
-      <div
-        ref={editableDivRef}
-        contentEditable
-        onPaste={handlePaste}
-        style={{
-          position:'absolute',
-          border: '1px solid #ccc',
-          padding: '10px',
-          height: '100px',
-          width: '100px',
-          overflowY: 'auto',
-          // boxSizing: 'border-box', // 确保 padding 和 border 包含在宽度内
-        }}
+    <div>
+      <div 
+      //  contentEditable
+       style={{
+        width: '100%',
+        height: '50px',
+        display: `${display}`
+       }}
       >
-        请黏贴图片
-      </div>
-    </>
+        {images.map((image, index) => (
+         <div
+         key={index}
+         style={{
+           position: 'relative',
+           float: 'left',
+           margin: '0px 10px 0px 10px',
+         }}
+       >
+         <img
+           src={image}
+           alt={`Image ${index}`}
+           style={{ width: '50px', height: '50px', cursor: 'pointer' }}
+           onClick={() => handleImageClick(image)}
+         />
+         <button
+           onClick={() => handleImageDelete(index)}
+           style={{
+             position: 'absolute',
+             top: '-5px',
+             right: '-5px',
+             backgroundColor: 'red',
+             color: 'white',
+             border: 'none',
+             borderRadius: '50%',
+             width: '15px',
+             height: '15px',
+             fontSize: '15px',
+             cursor: 'pointer',
+             textAlign: 'center',
+           }}
+         >
+           ×
+         </button>
+       </div>
+        ))}
+    </div>
+    <TextArea
+      {...props}
+      style={{
+        width: '100%',
+        height: '100%',
+        border: '2px solid rgb(41, 4, 4)',
+        // outline: 'none',
+        resize: 'none',
+        borderRadius:'40px',
+        padding: '10px',
+        // position: 'relative',
+        // backgroundColor: 'transparent',
+        // boxSizing: 'border-box', // 确保 padding 和 border 包含在宽度内
+      }}
+      onPaste={handlePaste}
+    />
+      <Modal
+        open={isModalVisible}
+        onCancel={handleModalCancel}
+        footer={null}
+        width={800}
+      >
+        {previewImage && <img src={previewImage} alt="Preview" style={{ width: '100%', height: 'auto' }} />}
+      </Modal>
+    </div>
   );
 };
 
