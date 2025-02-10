@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Input, Modal } from 'antd';
 import { TextAreaProps } from 'antd/lib/input';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState} from '../store';
 const { TextArea } = Input;
 
-interface CombinedInputAreaProps extends TextAreaProps {
-  imageUrlRef: React.MutableRefObject<string[]>;
-}
+// interface CombinedInputAreaProps extends TextAreaProps {
+//   imageUrlRef: React.MutableRefObject<string[]>;
+// }
 
-const CombinedInputArea: React.FC<CombinedInputAreaProps> = ({ onPaste, imageUrlRef, ...props }) => {
-  // const editableDivRef = useRef<HTMLDivElement | null>(null);
-  const [images, setImages] = useState<string[]>([]);
-  const [display, setDisplay] = useState<string>('none');
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+const CombinedInputArea: React.FC<TextAreaProps> = ({ onPaste, ...props }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const images = useSelector((state: RootState) => state.images)
+  const display = useSelector((state: RootState) => state.display)
+  const previewImage = useSelector((state: RootState) => state.previewImage)
+  const isModalVisible = useSelector((state: RootState) => state.isModalVisible)
 
   const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = event.clipboardData.items;
@@ -24,9 +26,10 @@ const CombinedInputArea: React.FC<CombinedInputAreaProps> = ({ onPaste, imageUrl
           reader.onload = (e) => {
             const result = e.target?.result;
             if (result) {
-              setDisplay('flex')
-              setImages((prevImages) => [...prevImages, result as string]);
-              imageUrlRef.current=[...imageUrlRef.current,result as string]
+              dispatch({ type: 'SET_DISPLAY', payload: 'flex' });
+              dispatch({ type: 'SET_IMAGES', payload: [...images, result as string]})
+              // setImages((prevImages) => [...prevImages, result as string]);
+              // imageUrlRef.current=[...imageUrlRef.current,result as string]
             }
           };
           reader.readAsDataURL(blob);
@@ -36,25 +39,24 @@ const CombinedInputArea: React.FC<CombinedInputAreaProps> = ({ onPaste, imageUrl
   };
 
   const handleImageClick = (image: string) => {
-    setPreviewImage(image);
-    setIsModalVisible(true);
+    dispatch({ type: 'SET_PREVIEW_IMAGE', payload: image });
+    dispatch({ type: 'SET_IS_MODAL_VISIBLE', payload: true }); 
   };
 
   const handleModalCancel = () => {
-    setIsModalVisible(false);
+    dispatch({ type: 'SET_IS_MODAL_VISIBLE', payload: false });
   };
 
   const handleImageDelete = (index : number) => {
     const temp = images.filter((_, i) => i !== index)
-    if(temp.length === 0) setDisplay('none'),console.log(temp);
+    if(temp.length === 0) dispatch({ type: 'SET_DISPLAY', payload: 'none' });
     // console.log(temp);
-    setImages(temp)
+    dispatch({ type: 'SET_IMAGES', payload: temp})
   };
 
   return (
     <div>
       <div 
-      //  contentEditable
        style={{
         width: '100%',
         height: '50px',
@@ -104,13 +106,9 @@ const CombinedInputArea: React.FC<CombinedInputAreaProps> = ({ onPaste, imageUrl
         width: '100%',
         height: '100%',
         border: '2px solid rgb(41, 4, 4)',
-        // outline: 'none',
-        resize: 'none',
+        resize: 'none',//禁用文本区域大小手动调整
         borderRadius:'40px',
         padding: '10px',
-        // position: 'relative',
-        // backgroundColor: 'transparent',
-        // boxSizing: 'border-box', // 确保 padding 和 border 包含在宽度内
       }}
       onPaste={handlePaste}
     />
