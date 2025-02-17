@@ -3,10 +3,10 @@ import { Layout, Menu, Input, Button, Typography, message, Space, Popover, Dropd
 import { UserOutlined, SearchOutlined, ArrowUpOutlined, PauseCircleOutlined } from '@ant-design/icons';
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from 'openai/resources/index.mjs';
-import DialogBubble from './dialogueBubble';
-import CombinedInputArea from './paste';
+import DialogBubble from '../../component/dialogueBubble';
+import CombinedInputArea from '../../component/paste';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '../store';
+import { RootState, AppDispatch } from '../../store';
 
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
@@ -35,16 +35,16 @@ const items: MenuItem[] = [
   { key: '5', label: 'AI 编程' },
 ];
 
-const menuItems: MenuProps['items'] = items.map((item) => ({
-  key: item.key,
-  label: <a href="#">{item.label}</a>,
-}));
-
 const openai = new OpenAI({
   apiKey: 'sk-abc6845c88d44b2aafd6e189ac3933b6',
   baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
   dangerouslyAllowBrowser: true //需要优化 避免危险
 });
+
+const menuItems: MenuProps['items'] = items.map((item) => ({
+  key: item.key,
+  label: <a href="#">{item.label}</a>,
+}));
 
 const LLMDialog: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -61,7 +61,7 @@ const LLMDialog: React.FC = () => {
   const isRegenerateRef = useRef<boolean>(false);
   // const imageUrlRef = useRef<string[]>([]);
   const scrollY = useRef(0);
-  
+
   // useEffect(() => {
   //   // 禁用整个页面的滚动
   //   document.body.style.overflow = 'hidden';
@@ -81,7 +81,7 @@ const LLMDialog: React.FC = () => {
     dispatch({ type: 'SET_LLM_DIALOG', payload: llmDialogRef.current });
 
     let tempMessages: ChatCompletionMessageParam[] = [...messages];
-    
+
     if (content.imgurl) {
       content.imgurl.forEach((item: string) => {
         tempMessages.push({
@@ -128,7 +128,7 @@ const LLMDialog: React.FC = () => {
           dispatch({ type: 'SET_LLM_DIALOG', payload: temp });
         }
       }
-      
+
       dispatch({
         type: 'SET_MESSAGES',
         payload: [
@@ -167,7 +167,7 @@ const LLMDialog: React.FC = () => {
       return;
     }
     dispatch({ type: 'SET_DISPLAY', payload: 'none' })
-    dispatch({ type: 'SET_IMAGES', payload: []})
+    dispatch({ type: 'SET_IMAGES', payload: [] })
     dispatch({ type: 'SET_IS_SCROLLING', payload: false });
     dispatch({ type: 'SET_IS_GENERAT', payload: true });
     dispatch({ type: 'SET_LAST_INPUT_TEXT', payload: inputText });
@@ -223,77 +223,57 @@ const LLMDialog: React.FC = () => {
   };
 
   return (
-    <Layout style={{ minHeight: '99vh' }}>
-      <Sider width={200} style={{ background: '#fff', height: '10vh' }}>
-        <Menu mode="inline" defaultSelectedKeys={['1']} items={menuItems} />
-      </Sider>
-      <Layout>
-        <Header style={{ background: '#fff', padding: '0 50px' }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <UserOutlined style={{ fontSize: 24 }} />
-            <Title level={5} >豆包</Title>
-            <Space>
-              <Button icon={<SearchOutlined />} />
-              <Popover content="最近对话" title="最近对话">
-                <Button>最近对话</Button>
-              </Popover>
-              <Dropdown menu={{ items }}>
-                <Button>更多</Button>
-              </Dropdown>
-            </Space>
-          </div>  
-        </Header>
-        <Content style={{ padding: 24, background: '#fff', height: '50vh' }}>
-          <DialogBubble
-            LlmDialogText={llmDialog}
-            isScrolling={isScrolling}
-            setIsScrolling={() => dispatch({ type: 'SET_IS_SCROLLING', payload: true })}
-            isGenerating={isGenerat}
-            setIsGenerating={() => dispatch({ type: 'SET_IS_GENERAT', payload: true })}
-            scrollY={scrollY}
-            regenerate={regenerate}
-          />
-        </Content>
-          <CombinedInputArea
-            autoSize={{ minRows: 4, maxRows: 12 }} // 设置自动伸缩的最小和最大行数
-            placeholder='输入问题或者粘贴图片提问'
-            maxLength={1000000} // 设置合理的最大长度
-            value={inputText}
-            onChange={(e) => dispatch({ type: 'SET_INPUT_TEXT', payload: e.target.value })}
-            onKeyDown={handleKeyDown}
-            style={{ width: 'auto', padding: '20px', borderRadius: '20px' }} // 设置最大高度
-            // imageUrlRef={imageUrlRef}
-          />
-          {!isGenerat ? (
-            <ArrowUpOutlined
-              style={{
-                borderRadius: '25px',
-                backgroundColor: !inputText ? 'rgb(208,208,208)' : 'rgb(0,102,245)',
-                position: 'absolute',
-                bottom: 30,
-                right: 30,
-                fontSize: 50,
-                cursor: 'pointer',
-                color: !inputText ? 'rgb(240,240,240)' : 'rgb(245,245,245)',
-              }}
-              onClick={handleSubmit}
-            />
-          ) : (
-            <PauseCircleOutlined
-              style={{
-                borderRadius: '25px',
-                backgroundColor: 'rgb(0,102,245)',
-                position: 'absolute',
-                bottom: 30,
-                right: 30,
-                fontSize: 50,
-                cursor: 'pointer',
-                color: !inputText ? 'rgb(240,240,240)' : 'rgb(245,245,245)',
-              }}
-              onClick={handleStop}
-            />
-          )}
-      </Layout>
+    <Layout>
+      <Content style={{ padding: 24, background: '#fff', height: '50vh' }}>
+        <DialogBubble
+          LlmDialogText={llmDialog}
+          isScrolling={isScrolling}
+          setIsScrolling={() => dispatch({ type: 'SET_IS_SCROLLING', payload: true })}
+          isGenerating={isGenerat}
+          setIsGenerating={() => dispatch({ type: 'SET_IS_GENERAT', payload: true })}
+          scrollY={scrollY}
+          regenerate={regenerate}
+        />
+      </Content>
+      <CombinedInputArea
+        autoSize={{ minRows: 4, maxRows: 12 }} // 设置自动伸缩的最小和最大行数
+        placeholder='输入问题或者粘贴图片提问'
+        maxLength={1000000} // 设置合理的最大长度
+        value={inputText}
+        onChange={(e) => dispatch({ type: 'SET_INPUT_TEXT', payload: e.target.value })}
+        onKeyDown={handleKeyDown}
+        style={{ width: 'auto', padding: '20px', borderRadius: '20px' }} // 设置最大高度
+      // imageUrlRef={imageUrlRef}
+      />
+      {!isGenerat ? (
+        <ArrowUpOutlined
+          style={{
+            borderRadius: '25px',
+            backgroundColor: !inputText ? 'rgb(208,208,208)' : 'rgb(0,102,245)',
+            position: 'absolute',
+            bottom: 30,
+            right: 30,
+            fontSize: 50,
+            cursor: 'pointer',
+            color: !inputText ? 'rgb(240,240,240)' : 'rgb(245,245,245)',
+          }}
+          onClick={handleSubmit}
+        />
+      ) : (
+        <PauseCircleOutlined
+          style={{
+            borderRadius: '25px',
+            backgroundColor: 'rgb(0,102,245)',
+            position: 'absolute',
+            bottom: 30,
+            right: 30,
+            fontSize: 50,
+            cursor: 'pointer',
+            color: !inputText ? 'rgb(240,240,240)' : 'rgb(245,245,245)',
+          }}
+          onClick={handleStop}
+        />
+      )}
     </Layout>
   );
 };
