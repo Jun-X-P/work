@@ -38,7 +38,7 @@ const LLMDialog: React.FC = () => {
   const isScrolling = useSelector((state: any) => state.chat.isScrolling);
   const isGenerat = useSelector((state: any) => state.chat.isGenerat);
   const images = useSelector((state: any) => state.chat.images);
-  
+
   const abortControllerRef = useRef<AbortController | null>(null);
   const llmDialogRef = useRef<LLMDialogProps[]>([]);
   const isRegenerateRef = useRef<boolean>(false);
