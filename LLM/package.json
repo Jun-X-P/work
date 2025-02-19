@@ -13,6 +13,7 @@
     "@reduxjs/toolkit": "^2.5.1",
     "antd": "^5.23.1",
     "date-fns": "^4.1.0",
+    "module-resolver": "^1.0.0",
     "openai": "^4.79.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

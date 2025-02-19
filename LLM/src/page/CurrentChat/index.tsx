@@ -1,20 +1,14 @@
-import React, { useEffect, useRef } from 'react';
-import { Layout, Menu, Input, Button, Typography, message, Space, Popover, Dropdown, MenuProps } from 'antd';
-import { UserOutlined, SearchOutlined, ArrowUpOutlined, PauseCircleOutlined } from '@ant-design/icons';
+import React, { useRef } from 'react';
+import { Layout, Input, message } from 'antd';
+import { ArrowUpOutlined, PauseCircleOutlined } from '@ant-design/icons';
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from 'openai/resources/index.mjs';
-import DialogBubble from '../../component/dialogueBubble';
-import CombinedInputArea from '../../component/paste';
+import DialogBubble from '@/component/dialogueBubble';
+import CombinedInputArea from '@/component/paste';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '../../store';
+import store from '@/store';
 
-const { Header, Sider, Content } = Layout;
-const { Title } = Typography;
-// const { TextArea } = Input;
-interface MenuItem {
-  key: string;
-  label: string;
-}
+const { Content } = Layout;
 
 export interface LLMDialogProps {
   id: number;
@@ -27,39 +21,27 @@ interface Input {
   text: string;
 }
 
-const items: MenuItem[] = [
-  { key: '1', label: 'AI 搜索' },
-  { key: '2', label: '帮我写作' },
-  { key: '3', label: '图像生成' },
-  { key: '4', label: 'AI 阅读' },
-  { key: '5', label: 'AI 编程' },
-];
-
 const openai = new OpenAI({
   apiKey: 'sk-abc6845c88d44b2aafd6e189ac3933b6',
   baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
   dangerouslyAllowBrowser: true //需要优化 避免危险
 });
 
-const menuItems: MenuProps['items'] = items.map((item) => ({
-  key: item.key,
-  label: <a href="#">{item.label}</a>,
-}));
 
 const LLMDialog: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const inputText = useSelector((state: RootState) => state.inputText);
-  const lastInputText = useSelector((state: RootState) => state.lastInputText);
-  const messages = useSelector((state: RootState) => state.messages);
-  const llmDialog = useSelector((state: RootState) => state.llmDialog);
-  const isScrolling = useSelector((state: RootState) => state.isScrolling);
-  const isGenerat = useSelector((state: RootState) => state.isGenerat);
-  const images = useSelector((state: RootState) => state.images);
-
+  const dispatch = useDispatch();
+  const actions = store.actions.chat;
+  const inputText = useSelector((state: any) => state.chat.inputText);
+  const lastInputText = useSelector((state: any) => state.chat.lastInputText);
+  const messages = useSelector((state: any) => state.chat.messages);
+  const llmDialog = useSelector((state: any) => state.chat.llmDialog);
+  const isScrolling = useSelector((state: any) => state.chat.isScrolling);
+  const isGenerat = useSelector((state: any) => state.chat.isGenerat);
+  const images = useSelector((state: any) => state.chat.images);
+  
   const abortControllerRef = useRef<AbortController | null>(null);
   const llmDialogRef = useRef<LLMDialogProps[]>([]);
   const isRegenerateRef = useRef<boolean>(false);
-  // const imageUrlRef = useRef<string[]>([]);
   const scrollY = useRef(0);
 
   // useEffect(() => {
@@ -78,8 +60,7 @@ const LLMDialog: React.FC = () => {
       { id: Date.now(), type: 'user', text: content.text ? content.text : '这是什么' },
     ];//有可能单独黏贴一张图片就按回车提问了 所以要初始化text
 
-    dispatch({ type: 'SET_LLM_DIALOG', payload: llmDialogRef.current });
-
+    dispatch(actions.setState({ llmDialog: llmDialogRef.current }));
     let tempMessages: ChatCompletionMessageParam[] = [...messages];
 
     if (content.imgurl) {
@@ -125,13 +106,12 @@ const LLMDialog: React.FC = () => {
           const deltaContent = chunk.choices[0].delta?.content || '';
           responseText += deltaContent;
           let temp: LLMDialogProps[] = [...llmDialogRef.current, { id: Date.now(), type: 'system', text: responseText }];
-          dispatch({ type: 'SET_LLM_DIALOG', payload: temp });
+          dispatch(actions.setState({ llmDialog: temp }));
         }
       }
 
-      dispatch({
-        type: 'SET_MESSAGES',
-        payload: [
+      dispatch(actions.setState({
+        messages: [
           ...tempMessages,
           {
             role: "assistant",
@@ -140,15 +120,14 @@ const LLMDialog: React.FC = () => {
             ]
           }
         ]
-      });
+      }))
 
-      dispatch({
-        type: 'SET_LLM_DIALOG',
-        payload: [
+      dispatch(actions.setState({
+        llmDialog: [
           ...llmDialogRef.current,
           { id: Date.now(), type: 'system', text: responseText }
         ]
-      });
+      }))
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         console.log('请求已中断');
@@ -166,12 +145,12 @@ const LLMDialog: React.FC = () => {
       message.warning('请输入你的问题');
       return;
     }
-    dispatch({ type: 'SET_DISPLAY', payload: 'none' })
-    dispatch({ type: 'SET_IMAGES', payload: [] })
-    dispatch({ type: 'SET_IS_SCROLLING', payload: false });
-    dispatch({ type: 'SET_IS_GENERAT', payload: true });
-    dispatch({ type: 'SET_LAST_INPUT_TEXT', payload: inputText });
-    dispatch({ type: 'SET_INPUT_TEXT', payload: '' }); // 重置输入框
+    dispatch(actions.setState({ display: 'none' }))
+    dispatch(actions.setState({ images: [] }))
+    dispatch(actions.setState({ isScrolling: false }))
+    dispatch(actions.setState({ isGenerat: true }))
+    dispatch(actions.setState({ lastInputText: inputText }))
+    dispatch(actions.setState({ inputText: '' }))// 重置输入框
 
     try {
       await fetchAi({ text: inputText, imgurl: images });
@@ -179,8 +158,7 @@ const LLMDialog: React.FC = () => {
       console.error('获取响应时出错:', error);
       message.error('获取响应时出错，请重试');
     } finally {
-      // imageUrlRef.current = [];
-      dispatch({ type: 'SET_IS_GENERAT', payload: false });
+      dispatch(actions.setState({ isGenerat: false }))
     }
   };
 
@@ -194,21 +172,21 @@ const LLMDialog: React.FC = () => {
   const handleStop = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
-      dispatch({ type: 'SET_IS_GENERAT', payload: false });
+      dispatch(actions.setState({ isGenerat: false }))
     }
     // 打断了也要保留记录 帮助ai回答
-    dispatch({
-      type: 'SET_MESSAGES',
-      payload: [
+    dispatch(actions.setState({
+      messages: [
         ...messages,
         { role: "assistant", content: lastInputText }
       ]
-    });
+    }))
   };
 
   const regenerate = async () => {
-    dispatch({ type: 'SET_IS_SCROLLING', payload: false });
-    dispatch({ type: 'SET_IS_GENERAT', payload: true });
+    dispatch(actions.setState({ isScrolling: false }))
+    dispatch(actions.setState({ isGenerat: true }))
+
     isRegenerateRef.current = true;
 
     try {
@@ -217,7 +195,8 @@ const LLMDialog: React.FC = () => {
       console.error('获取响应时出错:', error);
       message.error('获取响应时出错，请重试');
     } finally {
-      dispatch({ type: 'SET_IS_GENERAT', payload: false });
+      dispatch(actions.setState({ isGenerat: false }))
+
       isRegenerateRef.current = false;
     }
   };
@@ -228,9 +207,9 @@ const LLMDialog: React.FC = () => {
         <DialogBubble
           LlmDialogText={llmDialog}
           isScrolling={isScrolling}
-          setIsScrolling={() => dispatch({ type: 'SET_IS_SCROLLING', payload: true })}
+          setIsScrolling={() => dispatch(actions.setState({ isScrolling: true }))}
           isGenerating={isGenerat}
-          setIsGenerating={() => dispatch({ type: 'SET_IS_GENERAT', payload: true })}
+          setIsGenerating={() => dispatch(actions.setState({ isGenerat: true }))}
           scrollY={scrollY}
           regenerate={regenerate}
         />
@@ -240,10 +219,9 @@ const LLMDialog: React.FC = () => {
         placeholder='输入问题或者粘贴图片提问'
         maxLength={1000000} // 设置合理的最大长度
         value={inputText}
-        onChange={(e) => dispatch({ type: 'SET_INPUT_TEXT', payload: e.target.value })}
+        onChange={(e) => dispatch(actions.setState({ inputText: e.target.value }))}
         onKeyDown={handleKeyDown}
         style={{ width: 'auto', padding: '20px', borderRadius: '20px' }} // 设置最大高度
-      // imageUrlRef={imageUrlRef}
       />
       {!isGenerat ? (
         <ArrowUpOutlined

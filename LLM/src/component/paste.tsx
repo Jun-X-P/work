@@ -2,7 +2,7 @@ import React from 'react';
 import { Input, Modal } from 'antd';
 import { TextAreaProps } from 'antd/lib/input';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState} from '../store';
+import store from '@/store';
 const { TextArea } = Input;
 
 // interface CombinedInputAreaProps extends TextAreaProps {
@@ -10,11 +10,12 @@ const { TextArea } = Input;
 // }
 
 const CombinedInputArea: React.FC<TextAreaProps> = ({ onPaste, ...props }) => {
-  const dispatch = useDispatch<AppDispatch>();
-  const images = useSelector((state: RootState) => state.images)
-  const display = useSelector((state: RootState) => state.display)
-  const previewImage = useSelector((state: RootState) => state.previewImage)
-  const isModalVisible = useSelector((state: RootState) => state.isModalVisible)
+  const actions = store.actions.chat;
+  const dispatch = useDispatch();
+  const images:string[] = useSelector((state: any) => state.chat.images)
+  const display = useSelector((state: any) => state.chat.display)
+  const previewImage = useSelector((state: any) => state.chat.previewImage)
+  const isModalVisible = useSelector((state: any) => state.chat.isModalVisible)
 
   const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = event.clipboardData.items;
@@ -26,10 +27,8 @@ const CombinedInputArea: React.FC<TextAreaProps> = ({ onPaste, ...props }) => {
           reader.onload = (e) => {
             const result = e.target?.result;
             if (result) {
-              dispatch({ type: 'SET_DISPLAY', payload: 'flex' });
-              dispatch({ type: 'SET_IMAGES', payload: [...images, result as string]})
-              // setImages((prevImages) => [...prevImages, result as string]);
-              // imageUrlRef.current=[...imageUrlRef.current,result as string]
+              dispatch(actions.setState({ display: 'flex' }));
+              dispatch(actions.setState({ images: [...images, result as string] }))
             }
           };
           reader.readAsDataURL(blob);
@@ -39,19 +38,18 @@ const CombinedInputArea: React.FC<TextAreaProps> = ({ onPaste, ...props }) => {
   };
 
   const handleImageClick = (image: string) => {
-    dispatch({ type: 'SET_PREVIEW_IMAGE', payload: image });
-    dispatch({ type: 'SET_IS_MODAL_VISIBLE', payload: true }); 
+    dispatch(actions.setState({ previewImage: image }))
+    dispatch(actions.setState({ isModalVisible: true }))
   };
 
   const handleModalCancel = () => {
-    dispatch({ type: 'SET_IS_MODAL_VISIBLE', payload: false });
+    dispatch(actions.setState({ isModalVisible: false }))
   };
 
   const handleImageDelete = (index : number) => {
-    const temp = images.filter((_, i) => i !== index)
-    if(temp.length === 0) dispatch({ type: 'SET_DISPLAY', payload: 'none' });
-    // console.log(temp);
-    dispatch({ type: 'SET_IMAGES', payload: temp})
+    const temp = images.filter((_: any, i: number) => i !== index)
+    if(temp.length === 0) dispatch(actions.setState({ display: 'none' }));
+    dispatch(actions.setState({ images: temp }))
   };
 
   return (
