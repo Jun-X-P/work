@@ -3,19 +3,20 @@ import { Input, Modal } from 'antd';
 import { TextAreaProps } from 'antd/lib/input';
 import { useDispatch, useSelector } from 'react-redux';
 import store from '@/store';
+import { RootState } from '@/store';
 const { TextArea } = Input;
 
 // interface CombinedInputAreaProps extends TextAreaProps {
 //   imageUrlRef: React.MutableRefObject<string[]>;
 // }
 
-const CombinedInputArea: React.FC<TextAreaProps> = ({ onPaste, ...props }) => {
+const CombinedInputArea: React.FC<TextAreaProps> = ({ ...props }) => {
   const actions = store.actions.chat;
   const dispatch = useDispatch();
-  const images:string[] = useSelector((state: any) => state.chat.images)
-  const display = useSelector((state: any) => state.chat.display)
-  const previewImage = useSelector((state: any) => state.chat.previewImage)
-  const isModalVisible = useSelector((state: any) => state.chat.isModalVisible)
+  const images:string[] = useSelector((state: RootState) => state.chat.images)
+  const display = useSelector((state: RootState) => state.chat.display)
+  const previewImage = useSelector((state: RootState) => state.chat.previewImage)
+  const isModalVisible = useSelector((state: RootState) => state.chat.isModalVisible)
 
   const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = event.clipboardData.items;
@@ -47,7 +48,7 @@ const CombinedInputArea: React.FC<TextAreaProps> = ({ onPaste, ...props }) => {
   };
 
   const handleImageDelete = (index : number) => {
-    const temp = images.filter((_: any, i: number) => i !== index)
+    const temp = images.filter((_, i: number) => i !== index)
     if(temp.length === 0) dispatch(actions.setState({ display: 'none' }));
     dispatch(actions.setState({ images: temp }))
   };

@@ -9,10 +9,10 @@ const items: ItemType[] = [
   { key: 'recent', label: '历史对话' },
 ];
 
-const selfLayout: React.FC = () => {
+const SelfLayout: React.FC = () => {
   const navigate = useNavigate();
   const onClick: MenuProps['onClick'] = (e) => {
-    if(e.key !== 'current') navigate(`/${e.key}`);
+    if (e.key !== 'current') navigate(`/${e.key}`);
     else navigate('/');
   };
 
@@ -23,7 +23,7 @@ const selfLayout: React.FC = () => {
           <Menu
             mode="inline"
             defaultSelectedKeys={['current']}
-            items={items} 
+            items={items}
             onClick={onClick}
           />
         </Sider>
@@ -33,4 +33,4 @@ const selfLayout: React.FC = () => {
   );
 };
 
-export default selfLayout;
+export default SelfLayout;

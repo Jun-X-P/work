@@ -7,6 +7,7 @@ import DialogBubble from '@/component/dialogueBubble';
 import CombinedInputArea from '@/component/paste';
 import { useDispatch, useSelector } from 'react-redux';
 import store from '@/store';
+import { RootState } from '@/store';
 
 const { Content } = Layout;
 
@@ -31,13 +32,13 @@ const openai = new OpenAI({
 const LLMDialog: React.FC = () => {
   const dispatch = useDispatch();
   const actions = store.actions.chat;
-  const inputText = useSelector((state: any) => state.chat.inputText);
-  const lastInputText = useSelector((state: any) => state.chat.lastInputText);
-  const messages = useSelector((state: any) => state.chat.messages);
-  const llmDialog = useSelector((state: any) => state.chat.llmDialog);
-  const isScrolling = useSelector((state: any) => state.chat.isScrolling);
-  const isGenerat = useSelector((state: any) => state.chat.isGenerat);
-  const images = useSelector((state: any) => state.chat.images);
+  const inputText = useSelector((state: RootState) => state.chat.inputText);
+  const lastInputText = useSelector((state: RootState) => state.chat.lastInputText);
+  const messages = useSelector((state: RootState) => state.chat.messages);
+  const llmDialog = useSelector((state: RootState) => state.chat.llmDialog);
+  const isScrolling = useSelector((state: RootState) => state.chat.isScrolling);
+  const isGenerat = useSelector((state: RootState) => state.chat.isGenerat);
+  const images = useSelector((state: RootState) => state.chat.images);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const llmDialogRef = useRef<LLMDialogProps[]>([]);
@@ -61,7 +62,7 @@ const LLMDialog: React.FC = () => {
     ];//有可能单独黏贴一张图片就按回车提问了 所以要初始化text
 
     dispatch(actions.setState({ llmDialog: llmDialogRef.current }));
-    let tempMessages: ChatCompletionMessageParam[] = [...messages];
+    const tempMessages: ChatCompletionMessageParam[] = [...messages];//function需要name 其他role不需要 暂时不管
 
     if (content.imgurl) {
       content.imgurl.forEach((item: string) => {
@@ -78,13 +79,14 @@ const LLMDialog: React.FC = () => {
         content: [
           { type: "text", text: content.text ? content.text : '这是什么' }
         ]
-      });
-    } else {
-      tempMessages = [
-        ...messages,
-        { role: "user", content: content.text ? content.text : '这是什么' }
-      ];
-    }
+      })
+    };
+    // } else {
+    //   tempMessages = [
+    //     ...messages,
+    //     { role: "user", content: content.text ? content.text : '这是什么' }
+    //   ];
+    // }
 
     // 创建一个新的 AbortController 实例用来中断回复及中断请求
     const controller = new AbortController();
@@ -105,7 +107,7 @@ const LLMDialog: React.FC = () => {
         if (chunk.choices && chunk.choices.length > 0) {
           const deltaContent = chunk.choices[0].delta?.content || '';
           responseText += deltaContent;
-          let temp: LLMDialogProps[] = [...llmDialogRef.current, { id: Date.now(), type: 'system', text: responseText }];
+          const temp: LLMDialogProps[] = [...llmDialogRef.current, { id: Date.now(), type: 'system', text: responseText }];
           dispatch(actions.setState({ llmDialog: temp }));
         }
       }
