@@ -35,16 +35,16 @@ const items: MenuItem[] = [
   { key: '5', label: 'AI 编程' },
 ];
 
+const menuItems: MenuProps['items'] = items.map((item) => ({
+  key: item.key,
+  label: <a href="#">{item.label}</a>,
+}));
+
 const openai = new OpenAI({
   apiKey: 'sk-abc6845c88d44b2aafd6e189ac3933b6',
   baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
   dangerouslyAllowBrowser: true //需要优化 避免危险
 });
-
-const menuItems: MenuProps['items'] = items.map((item) => ({
-  key: item.key,
-  label: <a href="#">{item.label}</a>,
-}));
 
 const LLMDialog: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();

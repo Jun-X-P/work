@@ -1,13 +1,16 @@
-// src/App.tsx
-import React from 'react';
-import LLMDialog from './component/LLMDialog';
-import './index.css';
+import { Suspense } from "react";
+import { RouterProvider } from "react-router-dom";
+import router from "./router";
+import { Provider } from "react-redux";
+import { store } from "./store";
 
 const App: React.FC = () => {
   return (
-    <div className="App">
-      <LLMDialog />
-    </div>
+    <Provider store={store}>
+      <Suspense fallback={<div>Loading...</div>}>
+        <RouterProvider router={router} />
+      </Suspense>
+    </Provider>
   );
 };
 

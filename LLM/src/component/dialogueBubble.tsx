@@ -37,7 +37,8 @@ export default function DialogBubble( props: props ) {
   const liRef = useRef<HTMLLIElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const { LlmDialogText, isScrolling, setIsScrolling, isGenerating, regenerate, scrollY }= props;
-
+  // console.log('LlmDialogText:',LlmDialogText);
+  
   useEffect(() => {
     if (liRef.current && !isScrolling) {
       liRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
