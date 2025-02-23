@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { Layout, Menu, Input, Button, Typography, message, Space, Popover, Dropdown, MenuProps } from 'antd';
 import { UserOutlined, SearchOutlined, ArrowUpOutlined, PauseCircleOutlined } from '@ant-design/icons';
 import OpenAI from "openai";
@@ -124,7 +124,7 @@ const LLMDialog: React.FC = () => {
         if (chunk.choices && chunk.choices.length > 0) {
           const deltaContent = chunk.choices[0].delta?.content || '';
           responseText += deltaContent;
-          let temp: LLMDialogProps[] = [...llmDialogRef.current, { id: Date.now(), type: 'system', text: responseText }];
+          const temp: LLMDialogProps[] = [...llmDialogRef.current, { id: Date.now(), type: 'system', text: responseText }];
           dispatch({ type: 'SET_LLM_DIALOG', payload: temp });
         }
       }
