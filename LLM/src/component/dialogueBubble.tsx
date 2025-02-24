@@ -5,8 +5,8 @@ import { LLMDialogProps } from "./LLMDialog";
 const { Paragraph } = Typography;
 interface props {
   LlmDialogText: LLMDialogProps[],
-  isScrolling: boolean ,
-  setIsScrolling: React.Dispatch<React.SetStateAction<boolean>> ,
+  isScrolling: boolean,
+  setIsScrolling: React.Dispatch<React.SetStateAction<boolean>>,
   isGenerating: boolean,
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>,
   regenerate: () => void
@@ -33,12 +33,12 @@ const pStyle = {
   lineHeight: '30px',
   // userSelect: 'text'as React.CSSProperties['userSelect'] // 允许用户选择文本
 };
-export default function DialogBubble( props: props ) {
+export default function DialogBubble(props: props) {
   const liRef = useRef<HTMLLIElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const { LlmDialogText, isScrolling, setIsScrolling, isGenerating, regenerate, scrollY }= props;
+  const { LlmDialogText, isScrolling, setIsScrolling, isGenerating, regenerate, scrollY } = props;
   // console.log('LlmDialogText:',LlmDialogText);
-  
+
   useEffect(() => {
     if (liRef.current && !isScrolling) {
       liRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
@@ -46,7 +46,7 @@ export default function DialogBubble( props: props ) {
     }
     // console.log('is:',isScrolling);
   }, [LlmDialogText, isScrolling]);
-  
+
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     // event 是合成事件对象
     // 获取滚动的目标元素
@@ -54,26 +54,26 @@ export default function DialogBubble( props: props ) {
     // 获取垂直滚动距离
     const scrollTop = target.scrollTop;
     // console.log('now:',scrollTop,'last:',scrollY.current)
-    if(scrollY.current > scrollTop ) setIsScrolling(true),console.log('is:',true);
+    if (scrollY.current > scrollTop) setIsScrolling(true);
     scrollY.current = scrollTop;
-    
+
     // 获取水平滚动距离
     // console.log(`垂直滚动距离: ${scrollTop}px`);
     // console.log('is:',isScrolling);
   };
 
-  return ( 
+  return (
     <div ref={scrollContainerRef} onScroll={handleScroll} style={{ height: '100%', width: '100%', padding: '0 100px', overflowY: 'auto' }}>
-    <ul>
-      {LlmDialogText.map((item, index) => {
-        const positionStyle = item.type === 'user'
-          ? { ...baseStyle, float: 'right' as React.CSSProperties['float'], clear: 'both' as React.CSSProperties['clear']}
-          : { ...baseStyle, float: 'left' as React.CSSProperties['float'], clear: 'both' as React.CSSProperties['clear'], maxWidth: '100%' };
+      <ul>
+        {LlmDialogText.map((item, index) => {
+          const positionStyle = item.type === 'user'
+            ? { ...baseStyle, float: 'right' as React.CSSProperties['float'], clear: 'both' as React.CSSProperties['clear'] }
+            : { ...baseStyle, float: 'left' as React.CSSProperties['float'], clear: 'both' as React.CSSProperties['clear'], maxWidth: '100%' };
 
-        return (
-          <li key={item.id} style={positionStyle} ref={liRef}>
-            <Paragraph copyable style={pStyle} >{item.text}</Paragraph>
-            {item.type === 'system' && (
+          return (
+            <li key={item.id} style={positionStyle} ref={liRef}>
+              <Paragraph copyable style={pStyle} >{item.text}</Paragraph>
+              {item.type === 'system' && (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
                   {index === LlmDialogText.length - 1 && !isGenerating && (
                     <Button
@@ -86,10 +86,10 @@ export default function DialogBubble( props: props ) {
                   )}
                 </div>
               )}
-          </li>
-        );
-      })}
-    </ul>
-  </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

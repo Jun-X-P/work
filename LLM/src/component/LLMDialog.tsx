@@ -6,7 +6,7 @@ import { ChatCompletionMessageParam } from 'openai/resources/index.mjs';
 import DialogBubble from './dialogueBubble';
 import CombinedInputArea from './paste';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '../store';
+import { RootState } from '../store';
 
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
@@ -47,21 +47,21 @@ const openai = new OpenAI({
 });
 
 const LLMDialog: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const inputText = useSelector((state: RootState) => state.inputText);
-  const lastInputText = useSelector((state: RootState) => state.lastInputText);
-  const messages = useSelector((state: RootState) => state.messages);
-  const llmDialog = useSelector((state: RootState) => state.llmDialog);
-  const isScrolling = useSelector((state: RootState) => state.isScrolling);
-  const isGenerat = useSelector((state: RootState) => state.isGenerat);
-  const images = useSelector((state: RootState) => state.images);
+  const dispatch = useDispatch();
+  const inputText = useSelector((state: RootState) => state.chat.inputText);
+  const lastInputText = useSelector((state: RootState) => state.chat.lastInputText);
+  const messages = useSelector((state: RootState) => state.chat.messages);
+  const llmDialog = useSelector((state: RootState) => state.chat.llmDialog);
+  const isScrolling = useSelector((state: RootState) => state.chat.isScrolling);
+  const isGenerating = useSelector((state: RootState) => state.chat.isGenerating);
+  const images = useSelector((state: RootState) => state.chat.images);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const llmDialogRef = useRef<LLMDialogProps[]>([]);
   const isRegenerateRef = useRef<boolean>(false);
   // const imageUrlRef = useRef<string[]>([]);
   const scrollY = useRef(0);
-  
+
   // useEffect(() => {
   //   // 禁用整个页面的滚动
   //   document.body.style.overflow = 'hidden';
@@ -81,7 +81,7 @@ const LLMDialog: React.FC = () => {
     dispatch({ type: 'SET_LLM_DIALOG', payload: llmDialogRef.current });
 
     let tempMessages: ChatCompletionMessageParam[] = [...messages];
-    
+
     if (content.imgurl) {
       content.imgurl.forEach((item: string) => {
         tempMessages.push({
@@ -128,7 +128,7 @@ const LLMDialog: React.FC = () => {
           dispatch({ type: 'SET_LLM_DIALOG', payload: temp });
         }
       }
-      
+
       dispatch({
         type: 'SET_MESSAGES',
         payload: [
@@ -167,7 +167,7 @@ const LLMDialog: React.FC = () => {
       return;
     }
     dispatch({ type: 'SET_DISPLAY', payload: 'none' })
-    dispatch({ type: 'SET_IMAGES', payload: []})
+    dispatch({ type: 'SET_IMAGES', payload: [] })
     dispatch({ type: 'SET_IS_SCROLLING', payload: false });
     dispatch({ type: 'SET_IS_GENERAT', payload: true });
     dispatch({ type: 'SET_LAST_INPUT_TEXT', payload: inputText });
@@ -241,58 +241,58 @@ const LLMDialog: React.FC = () => {
                 <Button>更多</Button>
               </Dropdown>
             </Space>
-          </div>  
+          </div>
         </Header>
         <Content style={{ padding: 24, background: '#fff', height: '50vh' }}>
           <DialogBubble
             LlmDialogText={llmDialog}
             isScrolling={isScrolling}
             setIsScrolling={() => dispatch({ type: 'SET_IS_SCROLLING', payload: true })}
-            isGenerating={isGenerat}
+            isGenerating={isGenerating}
             setIsGenerating={() => dispatch({ type: 'SET_IS_GENERAT', payload: true })}
             scrollY={scrollY}
             regenerate={regenerate}
           />
         </Content>
-          <CombinedInputArea
-            autoSize={{ minRows: 4, maxRows: 12 }} // 设置自动伸缩的最小和最大行数
-            placeholder='输入问题或者粘贴图片提问'
-            maxLength={1000000} // 设置合理的最大长度
-            value={inputText}
-            onChange={(e) => dispatch({ type: 'SET_INPUT_TEXT', payload: e.target.value })}
-            onKeyDown={handleKeyDown}
-            style={{ width: 'auto', padding: '20px', borderRadius: '20px' }} // 设置最大高度
-            // imageUrlRef={imageUrlRef}
+        <CombinedInputArea
+          autoSize={{ minRows: 4, maxRows: 12 }} // 设置自动伸缩的最小和最大行数
+          placeholder='输入问题或者粘贴图片提问'
+          maxLength={1000000} // 设置合理的最大长度
+          value={inputText}
+          onChange={(e) => dispatch({ type: 'SET_INPUT_TEXT', payload: e.target.value })}
+          onKeyDown={handleKeyDown}
+          style={{ width: 'auto', padding: '20px', borderRadius: '20px' }} // 设置最大高度
+        // imageUrlRef={imageUrlRef}
+        />
+        {!isGenerating ? (
+          <ArrowUpOutlined
+            style={{
+              borderRadius: '25px',
+              backgroundColor: !inputText ? 'rgb(208,208,208)' : 'rgb(0,102,245)',
+              position: 'absolute',
+              bottom: 30,
+              right: 30,
+              fontSize: 50,
+              cursor: 'pointer',
+              color: !inputText ? 'rgb(240,240,240)' : 'rgb(245,245,245)',
+            }}
+            onClick={handleSubmit}
           />
-          {!isGenerat ? (
-            <ArrowUpOutlined
-              style={{
-                borderRadius: '25px',
-                backgroundColor: !inputText ? 'rgb(208,208,208)' : 'rgb(0,102,245)',
-                position: 'absolute',
-                bottom: 30,
-                right: 30,
-                fontSize: 50,
-                cursor: 'pointer',
-                color: !inputText ? 'rgb(240,240,240)' : 'rgb(245,245,245)',
-              }}
-              onClick={handleSubmit}
-            />
-          ) : (
-            <PauseCircleOutlined
-              style={{
-                borderRadius: '25px',
-                backgroundColor: 'rgb(0,102,245)',
-                position: 'absolute',
-                bottom: 30,
-                right: 30,
-                fontSize: 50,
-                cursor: 'pointer',
-                color: !inputText ? 'rgb(240,240,240)' : 'rgb(245,245,245)',
-              }}
-              onClick={handleStop}
-            />
-          )}
+        ) : (
+          <PauseCircleOutlined
+            style={{
+              borderRadius: '25px',
+              backgroundColor: 'rgb(0,102,245)',
+              position: 'absolute',
+              bottom: 30,
+              right: 30,
+              fontSize: 50,
+              cursor: 'pointer',
+              color: !inputText ? 'rgb(240,240,240)' : 'rgb(245,245,245)',
+            }}
+            onClick={handleStop}
+          />
+        )}
       </Layout>
     </Layout>
   );

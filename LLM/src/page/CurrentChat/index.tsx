@@ -37,7 +37,7 @@ const LLMDialog: React.FC = () => {
   const messages = useSelector((state: RootState) => state.chat.messages);
   const llmDialog = useSelector((state: RootState) => state.chat.llmDialog);
   const isScrolling = useSelector((state: RootState) => state.chat.isScrolling);
-  const isGenerat = useSelector((state: RootState) => state.chat.isGenerat);
+  const isGenerating = useSelector((state: RootState) => state.chat.isGenerating);
   const images = useSelector((state: RootState) => state.chat.images);
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -150,7 +150,7 @@ const LLMDialog: React.FC = () => {
     dispatch(actions.setState({ display: 'none' }))
     dispatch(actions.setState({ images: [] }))
     dispatch(actions.setState({ isScrolling: false }))
-    dispatch(actions.setState({ isGenerat: true }))
+    dispatch(actions.setState({ isGenerating: true }))
     dispatch(actions.setState({ lastInputText: inputText }))
     dispatch(actions.setState({ inputText: '' }))// 重置输入框
 
@@ -160,7 +160,7 @@ const LLMDialog: React.FC = () => {
       console.error('获取响应时出错:', error);
       message.error('获取响应时出错，请重试');
     } finally {
-      dispatch(actions.setState({ isGenerat: false }))
+      dispatch(actions.setState({ isGenerating: false }))
     }
   };
 
@@ -174,7 +174,7 @@ const LLMDialog: React.FC = () => {
   const handleStop = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
-      dispatch(actions.setState({ isGenerat: false }))
+      dispatch(actions.setState({ isGenerating: false }))
     }
     // 打断了也要保留记录 帮助ai回答
     dispatch(actions.setState({
@@ -187,7 +187,7 @@ const LLMDialog: React.FC = () => {
 
   const regenerate = async () => {
     dispatch(actions.setState({ isScrolling: false }))
-    dispatch(actions.setState({ isGenerat: true }))
+    dispatch(actions.setState({ isGenerating: true }))
 
     isRegenerateRef.current = true;
 
@@ -197,7 +197,7 @@ const LLMDialog: React.FC = () => {
       console.error('获取响应时出错:', error);
       message.error('获取响应时出错，请重试');
     } finally {
-      dispatch(actions.setState({ isGenerat: false }))
+      dispatch(actions.setState({ isGenerating: false }))
 
       isRegenerateRef.current = false;
     }
@@ -210,8 +210,8 @@ const LLMDialog: React.FC = () => {
           LlmDialogText={llmDialog}
           isScrolling={isScrolling}
           setIsScrolling={() => dispatch(actions.setState({ isScrolling: true }))}
-          isGenerating={isGenerat}
-          setIsGenerating={() => dispatch(actions.setState({ isGenerat: true }))}
+          isGenerating={isGenerating}
+          setIsGenerating={() => dispatch(actions.setState({ isGenerating: true }))}
           scrollY={scrollY}
           regenerate={regenerate}
         />
@@ -225,7 +225,7 @@ const LLMDialog: React.FC = () => {
         onKeyDown={handleKeyDown}
         style={{ width: 'auto', padding: '20px', borderRadius: '20px' }} // 设置最大高度
       />
-      {!isGenerat ? (
+      {!isGenerating ? (
         <ArrowUpOutlined
           style={{
             borderRadius: '25px',
