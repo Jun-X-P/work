@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Layout, Input, message } from 'antd';
 import { ArrowUpOutlined, PauseCircleOutlined } from '@ant-design/icons';
 import OpenAI from "openai";
@@ -8,6 +8,8 @@ import CombinedInputArea from '@/component/paste';
 import { useDispatch, useSelector } from 'react-redux';
 import store from '@/store';
 import { RootState } from '@/store';
+import { useParams } from 'react-router-dom';
+import { ChatState } from '@/store/modules/chat';
 
 const { Content } = Layout;
 
@@ -30,6 +32,7 @@ const openai = new OpenAI({
 
 
 const LLMDialog: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch();
   const actions = store.actions.chat;
   const inputText = useSelector((state: RootState) => state.chat.inputText);
@@ -39,11 +42,27 @@ const LLMDialog: React.FC = () => {
   const isScrolling = useSelector((state: RootState) => state.chat.isScrolling);
   const isGenerating = useSelector((state: RootState) => state.chat.isGenerating);
   const images = useSelector((state: RootState) => state.chat.images);
+  const name = useSelector((state: RootState) => state.chat.name);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const llmDialogRef = useRef<LLMDialogProps[]>([]);
   const isRegenerateRef = useRef<boolean>(false);
   const scrollY = useRef(0);
+
+  useEffect(() => {
+    if (id) {
+      const storedChatStates = localStorage.getItem("chatStates");
+      const chatStates = storedChatStates
+        ? JSON.parse(storedChatStates)
+        : [];
+      const chatState = chatStates.find((chatState: ChatState) => chatState.id === id);
+      if (chatState) {
+        dispatch(actions.setState(chatState));
+      }
+      // setCurrentChatState(chatState);
+    }
+  }, [id]);
+
 
   // useEffect(() => {
   //   // 禁用整个页面的滚动
@@ -143,6 +162,8 @@ const LLMDialog: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    if (name === "新对话") dispatch(actions.setState({ name: inputText }));
+
     if (!inputText && !images) {
       message.warning('请输入你的问题');
       return;

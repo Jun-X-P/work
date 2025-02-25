@@ -4,7 +4,7 @@ import React from 'react';
 // 动态导入组件
 const Layout = React.lazy(() => import('@/page/Layout'));
 const CurrentChat = React.lazy(() => import('@/page/CurrentChat'));
-const RecentChat = React.lazy(() => import('@/page/RecentChat'));
+// const RecentChat = React.lazy(() => import('@/page/RecentChat'));
 const NotFound = React.lazy(() => import('@/page/Notfound'));
 
 const router = createBrowserRouter([
@@ -17,8 +17,8 @@ const router = createBrowserRouter([
         element: <CurrentChat />,
       },
       {
-        path: "recent",
-        element: <RecentChat />,
+        path: "recent/:id",
+        element: <CurrentChat />,
       },
     ],
   },
