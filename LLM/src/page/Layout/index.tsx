@@ -48,8 +48,9 @@ const SelfLayout: React.FC = () => {
   // localStorage.setItem('chatStates', JSON.stringify([]));
   items = [
     ...chatStates
-      .slice(0, 25) // 创建副本避免修改原数组
+      .slice() // 创建副本避免修改原数组
       .reverse() // 倒序排列
+      .slice(0, 25) // 取前10个元素
       .map((chatState: ChatState) => ({
         key: chatState.id,
         label: chatState.name,
